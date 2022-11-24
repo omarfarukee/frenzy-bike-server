@@ -21,6 +21,7 @@ async function run(){
     try{
 
         const bikesCollection = client.db('bikes').collection('bikeCategory')
+        const itemsCollection = client.db('bikes').collection('items')
 
         app.get('/categories', async(req, res) =>{   
             const query ={}
@@ -28,6 +29,17 @@ async function run(){
              res.send(result)
         })
 
+        app.get('/items', async( req, res) => {
+            const query = {}
+            const result = await itemsCollection.find(query).toArray()
+            res.send(result)
+        })
+        app.get('/items/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { categoryId : id };
+            const result = await itemsCollection.find(query).toArray();
+            res.send(result);
+        })
     } 
     finally{
 
