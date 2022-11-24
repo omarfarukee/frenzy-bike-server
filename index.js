@@ -47,6 +47,18 @@ async function run(){
             const result = await bookedCollection.insertOne(booking)
             res.send(result)
         })
+
+        app.get('/bookedItem', async( req,res) =>{
+            const email = req.query.email
+            // const decodedEmail = req.decoded.email
+            // if(email !== decodedEmail){
+            //     return res.status(403).send({message: 'forbidden access'})
+            // }
+            const query = {email: email};
+            // console.log(req.headers.authorization)
+            const result =  await bookedCollection.find(query).toArray()
+            res.send(result)
+        })
     } 
     finally{
 
