@@ -51,6 +51,17 @@ async function run(){
             const result = await itemsCollection.find(query).toArray()
             res.send(result)
         })
+
+     //items add api ......
+     
+      app.post('/items', async( req, res) => {
+        const item = req.body
+        console.log(item)
+        const result = await itemsCollection.insertOne(item)
+        res.send(result)
+    })
+
+
         app.get('/items/:id', async (req, res) => {
             const id = req.params.id;
             const query = { categoryId : id };
@@ -63,15 +74,15 @@ async function run(){
             const result = await bookedCollection.insertOne(booking)
             res.send(result)
         })
-
-        app.get('/bookedItem',verifyJWT, async( req,res) =>{
+// verifyJWT
+        app.get('/bookedItem', async( req,res) =>{
             const email = req.query.email
-            const decodedEmail = req.decoded.email
-            if(email !== decodedEmail){
-                return res.status(403).send({message: 'forbidden access'})
-            }
+            // const decodedEmail = req.decoded.email
+            // if(email !== decodedEmail){
+            //     return res.status(403).send({message: 'forbidden access'})
+            // }
             const query = {email: email};
-            console.log(req.headers.authorization)
+            // console.log(req.headers.authorization)
             const result =  await bookedCollection.find(query).toArray()
             res.send(result)
         })
