@@ -23,6 +23,7 @@ async function run(){
         const bikesCollection = client.db('bikes').collection('bikeCategory')
         const itemsCollection = client.db('bikes').collection('items')
         const bookedCollection = client.db('bikes').collection('bookedItem')
+        const usersCollection = client.db('bikes').collection('users')
 
         app.get('/categories', async(req, res) =>{   
             const query ={}
@@ -59,6 +60,15 @@ async function run(){
             const result =  await bookedCollection.find(query).toArray()
             res.send(result)
         })
+
+
+        app.post('/users', async(req, res)=>{
+            const user = req.body;
+            const result = await usersCollection.insertOne(user)
+            res.send(result);
+        })
+    
+
     } 
     finally{
 
