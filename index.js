@@ -63,7 +63,7 @@ async function run(){
             res.send(result)
         })
 
-        // jwt token-------------
+        // jwt token-------------set up 
 
         app.get('/jwt', async(req, res) => {
             const email = req.query.email; 
@@ -71,11 +71,12 @@ async function run(){
             const user = await usersCollection.findOne(query);
             if(user){
                 const token = jwt.sign({email}, process.env.ACCESS_TOKEN, {expiresIn: '1d'})
+                return res.send({accessToken: token})
             }
-            console.log(user)
-            res.send({accessToken: 'token'})
+            // console.log(user)
+            res.status(403).send({accessToken: 'No token'})
         })
-
+  // jwt token-------------set up 
         app.post('/users', async(req, res)=>{
             const user = req.body;
             const result = await usersCollection.insertOne(user)
