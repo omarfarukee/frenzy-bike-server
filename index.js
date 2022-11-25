@@ -12,7 +12,20 @@ app.use(cors())
 app.use(express.json())
 
 
-
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).send('Unauthorize Access')
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(error, decoded){
+        if(error){
+            return res.status(403).send({message: 'Forbidden Access'})
+        }
+        req.decoded = decoded
+        next()
+    })
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.xdpsuxi.mongodb.net/?retryWrites=true&w=majority`;
@@ -51,14 +64,14 @@ async function run(){
             res.send(result)
         })
 
-        app.get('/bookedItem', async( req,res) =>{
+        app.get('/bookedItem',verifyJWT, async( req,res) =>{
             const email = req.query.email
-            // const decodedEmail = req.decoded.email
-            // if(email !== decodedEmail){
-            //     return res.status(403).send({message: 'forbidden access'})
-            // }
+            const decodedEmail = req.decoded.email
+            if(email !== decodedEmail){
+                return res.status(403).send({message: 'forbidden access'})
+            }
             const query = {email: email};
-            // console.log(req.headers.authorization)
+            console.log(req.headers.authorization)
             const result =  await bookedCollection.find(query).toArray()
             res.send(result)
         })
