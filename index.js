@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5000
 const app = express()
@@ -52,6 +52,24 @@ async function run() {
             res.send(result)
         })
 
+        //api  for admin , buyer , seller profile Startttttttttttttttttttttttt...................................... 
+
+        app.get('/users', async (req, res) => {
+            const email = req.query.email
+            // const decodedEmail = req.decoded.email
+            // if(email !== decodedEmail){
+            //     return res.status(403).send({message: 'forbidden access'})
+            // }
+            const query = { email: email };
+            // console.log(req.headers.authorization)
+            const result = await usersCollection.find(query).toArray()
+            res.send(result)
+
+        })
+        //api  for admin , buyer , seller profile  ENDDDDDDDDDDDDDDDDDDDDDDDD...................................... 
+        //  |
+        //  |
+
         //items add api ......
 
         app.post('/items', async (req, res) => {
@@ -102,7 +120,7 @@ async function run() {
         })
         // jwt token-------------set up end
 
-        app.get('/dashBoard/items', async (req, res) => {
+        app.get('/dashboard/items', async (req, res) => {
             const email = req.query.email
             // const decodedEmail = req.decoded.email
             // if(email !== decodedEmail){
@@ -113,6 +131,26 @@ async function run() {
             const result = await itemsCollection.find(query).toArray()
             res.send(result)
         })
+
+        // api for delete operation in seller add items delete profile startttttttttttttttttttttttttttttt----------------------
+
+        app.delete('/dashboard/items/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await itemsCollection.deleteOne(query);
+            res.send(result)
+        })
+
+        app.get('/dashboard/items/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log()
+            const query = { _id: ObjectId(id) };
+            const result = await itemsCollection.findOne(query);
+            res.send(result)
+        })
+
+        // api for delete operation in seller profile ENDDDDDDDDDDDDDDDDDDDDDDDD--------------------------------------
+
 
         app.post('/users', async (req, res) => {
             const user = req.body;
@@ -128,6 +166,28 @@ async function run() {
             const sellers = users.filter(user => user.role === 'seller')
             res.send(sellers);
         })
+ // api for admin's delete operation for allUsers  Starttttttttttttttttttttttttttttttttt=============================
+
+        app.get('/users/allSellers/:id', async (req, res) => {
+
+            const id = req.params.id;
+            console.log()
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.findOne(query);
+            res.send(result)
+            
+        })
+
+        app.delete('/users/allSellers/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(query);
+            res.send(result)
+        })
+
+ // api for admin's delete operation for allUsers  ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=============================
+
+
         app.get('/users/allBuyers', async (req, res) => {
 
             const query = {};
@@ -136,6 +196,9 @@ async function run() {
             const sellers = users.filter(user => user.role === 'buyer')
             res.send(sellers);
         })
+
+
+
 
     }
     finally {
