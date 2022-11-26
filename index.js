@@ -1,18 +1,20 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET)
 const port = process.env.PORT || 5000
 const app = express()
 
 const jwt = require('jsonwebtoken')
-require('dotenv').config()
+
 
 app.use(cors())
 app.use(express.json())
 
 
 function verifyJWT(req, res, next) {
+    // console.log('token', req.headers.authorization)
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         return res.status(401).send('Unauthorize Access')
@@ -20,7 +22,7 @@ function verifyJWT(req, res, next) {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN, function (error, decoded) {
         if (error) {
-            return res.status(403).send({ message: 'Forbidden Access' })
+           return res.status(403).send({ message: 'Forbidden Access' })
         }
         req.decoded = decoded
         next()
@@ -39,6 +41,7 @@ async function run() {
         const itemsCollection = client.db('bikes').collection('items')
         const bookedCollection = client.db('bikes').collection('bookedItem')
         const usersCollection = client.db('bikes').collection('users')
+        const paymentsCollection = client.db('bikes').collection('payments')
 
         app.get('/categories', async (req, res) => {
             const query = {}
@@ -92,15 +95,59 @@ async function run() {
             const result = await bookedCollection.insertOne(booking)
             res.send(result)
         })
-        // verifyJWT
-        app.get('/bookedItem', async (req, res) => {
+
+// payment api ++++++++++++++++++++++++++++++++++++++++
+
+        app.get('/bookedItem/:id', async (req, res) => {
+            const id =req.params.id;
+            const query = {_id: ObjectId(id)};
+            const booked = await bookedCollection.findOne(query);
+            res.send(booked)
+        })
+
+    app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+        const paymentIntent = await stripe.paymentIntents.create({
+                 currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+             });
+             console.log(paymentIntent.client_secret)
+        });
+
+        app.post('/payments', async (req, res) =>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedPayment = await bookedCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+         })
+
+// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        //  ,
+        app.get('/bookedItem',verifyJWT , async (req, res) => {
             const email = req.query.email
-            // const decodedEmail = req.decoded.email
-            // if(email !== decodedEmail){
-            //     return res.status(403).send({message: 'forbidden access'})
-            // }
-            const query = { email: email };
-            // console.log(req.headers.authorization)
+            const decodedEmail = req.decoded.email
+            if(email !== decodedEmail){
+                return res.status(403).send({message: 'forbidden access'})
+            }
+         const query = { email: email };
+            console.log(req.headers.authorization)
             const result = await bookedCollection.find(query).toArray()
             res.send(result)
         })
@@ -115,8 +162,9 @@ async function run() {
                 const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '1d' })
                 return res.send({ accessToken: token })
             }
-            // console.log(user)
-            res.status(403).send({ accessToken: 'No token' })
+            console.log(user)
+            // res.send({accessToken : 'accessToken'})
+             res.status(403).send({ accessToken: 'No token' })
         })
         // jwt token-------------set up end
 
@@ -166,7 +214,7 @@ async function run() {
             const sellers = users.filter(user => user.role === 'seller')
             res.send(sellers);
         })
- // api for admin's delete operation for allUsers  Starttttttttttttttttttttttttttttttttt=============================
+        // api for admin's delete operation for all seller  Starttttttttttttttttttttttttttttttttt=============================
 
         app.get('/users/allSellers/:id', async (req, res) => {
 
@@ -175,7 +223,7 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await usersCollection.findOne(query);
             res.send(result)
-            
+
         })
 
         app.delete('/users/allSellers/:id', async (req, res) => {
@@ -185,7 +233,7 @@ async function run() {
             res.send(result)
         })
 
- // api for admin's delete operation for allUsers  ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=============================
+        // api for admin's delete operation for allUsers  ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=============================
 
 
         app.get('/users/allBuyers', async (req, res) => {
@@ -197,7 +245,26 @@ async function run() {
             res.send(sellers);
         })
 
+        // api for admin's delete operation for buyers  Starttttttttttttttttttttttttttttttttt=============================
 
+        app.get('/users/allBuyers/:id', async (req, res) => {
+
+            const id = req.params.id;
+            console.log()
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.findOne(query);
+            res.send(result)
+
+        })
+
+        app.delete('/users/allBuyers/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(query);
+            res.send(result)
+        })
+
+        // api for admin's delete operation for all buyers  ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=============================
 
 
     }
