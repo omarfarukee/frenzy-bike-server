@@ -43,6 +43,7 @@ async function run() {
         const usersCollection = client.db('bikes').collection('users')
         const paymentsCollection = client.db('bikes').collection('payments')
         const addsCollection = client.db('bikes').collection('adds')
+        const reportCollection = client.db('bikes').collection('reports')
 
         app.get('/categories', async (req, res) => {
             const query = {}
@@ -126,6 +127,14 @@ async function run() {
 
         app.post('/bookedItem', async (req, res) => {
             const booking = req.body
+
+            const query = { productName: booking.productName }
+            const alreadyBooked = await bookedCollection.find(query).toArray()
+            console.log(alreadyBooked)
+            if (alreadyBooked.length) {
+                const message = `This item is Already booked`
+                return res.send({ acknowledged: false, message })
+            }
             const result = await bookedCollection.insertOne(booking)
             res.send(result)
         })
@@ -314,6 +323,26 @@ async function run() {
             const query = {};
             const result = await addsCollection.find(query).toArray()
             res.send(result);
+        })
+
+
+        // report =================================================
+        app.get('/reportByAdmin', async (req, res) => {
+            const query = {};
+            const result = await reportCollection.find(query).toArray()
+            res.send(result);
+        })
+
+        app.post('/report', async (req, res) => {
+            const user = req.body;
+            const result = await reportCollection.insertOne(user)
+            res.send(result);
+        })
+        app.delete('/dashboard/reportAdmin/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await reportCollection.deleteOne(query);
+            res.send(result)
         })
 
     }
