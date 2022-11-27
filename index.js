@@ -42,6 +42,7 @@ async function run() {
         const bookedCollection = client.db('bikes').collection('bookedItem')
         const usersCollection = client.db('bikes').collection('users')
         const paymentsCollection = client.db('bikes').collection('payments')
+        const addsCollection = client.db('bikes').collection('adds')
 
         app.get('/categories', async (req, res) => {
             const query = {}
@@ -72,6 +73,39 @@ async function run() {
         //api  for admin , buyer , seller profile  ENDDDDDDDDDDDDDDDDDDDDDDDD...................................... 
         //  |
         //  |
+
+        // verification by admin ..STARTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT...+++++++++++++++++++++++++++
+
+
+        app.get('/users', async (req, res) => {
+            const email = req.query.email
+            const role = req.body.status 
+            const query = { email: email };
+            const updatedDoc = {
+                $set: {
+                    role :role
+                }
+            }
+            const result = await usersCollection.updateOne(query,updatedDoc);
+            res.send(result)
+        })
+
+
+
+        // app.put('users/admin/:id', async (req, res) => {
+        //     const id = req.params.id ;
+        //     const filter = {_id: ObjectId(id)} 
+        //     const options = {upsert : true};
+        //     const updatedDoc= {
+        //         $set: {
+        //             role: 'admin'
+        //         }
+        //     }
+        //     const result = await usersCollection.updateOne(filter, updatedDoc, options)
+        //     res.send(result)
+        // })
+
+ // verification by admin ..ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...+++++++++++++++++++++++++++
 
         //items add api ......
 
@@ -206,6 +240,8 @@ async function run() {
             res.send(result);
         })
 
+        
+
         app.get('/users/allSellers', async (req, res) => {
 
             const query = {};
@@ -266,6 +302,19 @@ async function run() {
 
         // api for admin's delete operation for all buyers  ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=============================
 
+        // adds api TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT=======================
+
+        app.post('/adds', async (req, res) => {
+            const user = req.body;
+            const result = await addsCollection.insertOne(user)
+            res.send(result);
+        })
+
+        app.get('/adds', async (req, res) => {
+            const query = {};
+            const result = await addsCollection.find(query).toArray()
+            res.send(result);
+        })
 
     }
     finally {
