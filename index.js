@@ -45,6 +45,23 @@ async function run() {
         const addsCollection = client.db('bikes').collection('adds')
         const reportCollection = client.db('bikes').collection('reports')
 
+        //delete advertiseTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT ===============================
+
+        app.delete('/adds/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await addsCollection.deleteOne(query);
+            res.send(result)
+        })
+        app.get('/adds/:id', async (req, res) => {
+            const id =req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await addsCollection.findOne(query);
+            res.send(result)
+        })
+
+ //delete advertise EEEEEEEEEEEEEEEEEEEEENNNNNNNNNNNNNDDDDDDDDDDDDDDDDDDD===================
+
         app.get('/categories', async (req, res) => {
             const query = {}
             const result = await bikesCollection.find(query).toArray();
@@ -78,33 +95,19 @@ async function run() {
         // verification by admin ..STARTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT...+++++++++++++++++++++++++++
 
 
-        app.get('/users', async (req, res) => {
-            const email = req.query.email
-            const role = req.body.status 
-            const query = { email: email };
+
+        app.put('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
             const updatedDoc = {
                 $set: {
-                    role :role
+                    status: 'verified'
                 }
             }
-            const result = await usersCollection.updateOne(query,updatedDoc);
-            res.send(result)
-        })
-
-
-
-        // app.put('users/admin/:id', async (req, res) => {
-        //     const id = req.params.id ;
-        //     const filter = {_id: ObjectId(id)} 
-        //     const options = {upsert : true};
-        //     const updatedDoc= {
-        //         $set: {
-        //             role: 'admin'
-        //         }
-        //     }
-        //     const result = await usersCollection.updateOne(filter, updatedDoc, options)
-        //     res.send(result)
-        // })
+            const result = await usersCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
 
  // verification by admin ..ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD...+++++++++++++++++++++++++++
 
@@ -121,18 +124,20 @@ async function run() {
         app.get('/items/:id', async (req, res) => {
             const id = req.params.id;
             const query = { categoryId: id };
+            console.log(query)
             const result = await itemsCollection.find(query).toArray();
             res.send(result);
+            
         })
 
         app.post('/bookedItem', async (req, res) => {
             const booking = req.body
 
-            const query = { productName: booking.productName }
-            const alreadyBooked = await bookedCollection.find(query).toArray()
-            console.log(alreadyBooked)
-            if (alreadyBooked.length) {
-                const message = `This item is Already booked`
+            const query = { modelName: booking.modelName }
+            const booked = await bookedCollection.find(query).toArray()
+            console.log(booked)
+            if (booked.length) {
+                const message = `this item is already booked`
                 return res.send({ acknowledged: false, message })
             }
             const result = await bookedCollection.insertOne(booking)
